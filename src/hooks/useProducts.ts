@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Product } from "@/types";
+import { Product, PaginatedResponse } from "@/types";
 import { productApi } from "@/lib/api/products";
+import { handleApiError } from "@/lib/api/axios";
 
 interface UseProductsOptions {
   page?: number;
@@ -108,16 +109,23 @@ export function useProducts(options: UseProductsOptions = {}) {
       });
 
       // Snapshot the previous value
-      const previousProducts = queryClient.getQueryData(productKeys.lists());
+      const previousProducts = queryClient.getQueryData<
+        PaginatedResponse<Product>
+      >(productKeys.lists());
 
       // Optimistically remove the product from lists
-      queryClient.setQueriesData(
-        { queryKey: productKeys.lists() },
-        (old: any) => ({
-          ...old,
-          data: old.data.filter((product: Product) => product.id !== id),
-        })
-      );
+      if (previousProducts) {
+        queryClient.setQueriesData<PaginatedResponse<Product>>(
+          { queryKey: productKeys.lists() },
+          (old) => {
+            if (!old) return previousProducts;
+            return {
+              ...old,
+              data: old.data.filter((product) => product.id !== id),
+            };
+          }
+        );
+      }
 
       return { previousProducts };
     },
@@ -137,22 +145,28 @@ export function useProducts(options: UseProductsOptions = {}) {
     products: data?.data ?? [],
     pagination: data?.pagination,
     isLoading,
-    error: error as Error | null,
+    error: error ? handleApiError(error as unknown) : null,
     refreshProducts,
 
     // Mutations
     createProduct: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
-    createError: createMutation.error as Error | null,
+    createError: createMutation.error
+      ? handleApiError(createMutation.error as unknown)
+      : null,
 
     updateProduct: (id: string, data: Partial<Product>) =>
       updateMutation.mutateAsync({ id, data }),
     isUpdating: updateMutation.isPending,
-    updateError: updateMutation.error as Error | null,
+    updateError: updateMutation.error
+      ? handleApiError(updateMutation.error as unknown)
+      : null,
 
     deleteProduct: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
-    deleteError: deleteMutation.error as Error | null,
+    deleteError: deleteMutation.error
+      ? handleApiError(deleteMutation.error as unknown)
+      : null,
 
     // Combined loading state
     isMutating:

@@ -1,40 +1,41 @@
 import { Product, PaginatedResponse } from "@/types";
-import { API_ENDPOINTS, PAGINATION } from "@/constants/api";
+import { axiosInstance } from "./axios";
+import { API_ENDPOINTS } from "@/constants/api";
 
 /**
  * Product API client
+ * Centralizes all product-related API calls
  */
 export const productApi = {
   /**
    * Fetch products with pagination and search
    */
   getProducts: async ({
-    page = PAGINATION.DEFAULT_PAGE,
-    limit = PAGINATION.DEFAULT_LIMIT,
+    page = 1,
+    limit = 10,
     search,
   }: {
     page?: number;
     limit?: number;
     search?: string;
   }): Promise<PaginatedResponse<Product>> => {
-    const searchParams = new URLSearchParams({
+    const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
     });
 
     if (search) {
-      searchParams.append("search", search);
+      params.append("search", search);
     }
 
-    const response = await fetch(
-      `${API_ENDPOINTS.PRODUCTS}?${searchParams.toString()}`
-    );
+    return axiosInstance.get(`${API_ENDPOINTS.PRODUCTS}?${params.toString()}`);
+  },
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch products");
-    }
-
-    return response.json();
+  /**
+   * Get a single product by ID
+   */
+  getProduct: async (id: string): Promise<Product> => {
+    return axiosInstance.get(`${API_ENDPOINTS.PRODUCTS}/${id}`);
   },
 
   /**
@@ -43,19 +44,7 @@ export const productApi = {
   createProduct: async (
     data: Omit<Product, "id" | "createdAt" | "updatedAt">
   ): Promise<Product> => {
-    const response = await fetch(API_ENDPOINTS.PRODUCTS, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to create product");
-    }
-
-    return response.json();
+    return axiosInstance.post(API_ENDPOINTS.PRODUCTS, data);
   },
 
   /**
@@ -65,31 +54,13 @@ export const productApi = {
     id: string,
     data: Partial<Product>
   ): Promise<Product> => {
-    const response = await fetch(`${API_ENDPOINTS.PRODUCTS}/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to update product");
-    }
-
-    return response.json();
+    return axiosInstance.put(`${API_ENDPOINTS.PRODUCTS}/${id}`, data);
   },
 
   /**
    * Delete a product
    */
   deleteProduct: async (id: string): Promise<void> => {
-    const response = await fetch(`${API_ENDPOINTS.PRODUCTS}/${id}`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to delete product");
-    }
+    return axiosInstance.delete(`${API_ENDPOINTS.PRODUCTS}/${id}`);
   },
 };

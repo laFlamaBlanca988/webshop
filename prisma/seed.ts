@@ -1,32 +1,50 @@
 import { PrismaClient } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clear existing data
-  await prisma.product.deleteMany();
+  // Delete existing records
+  await prisma.product.deleteMany({});
 
   // Create sample products
-  const products = await Promise.all([
-    prisma.product.create({
-      data: {
-        name: "Sample Product 1",
-        price: 29.99,
-        description: "This is a sample product description",
-        images: ["sample1.jpg"],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "Sample Product 2",
-        price: 39.99,
-        description: "Another sample product description",
-        images: ["sample2.jpg"],
-      },
-    }),
-  ]);
+  const products = [
+    {
+      name: "Classic T-Shirt",
+      price: new Decimal(29.99),
+      description: "Comfortable cotton t-shirt in various colors",
+      images: [
+        "https://example.com/tshirt-1.jpg",
+        "https://example.com/tshirt-2.jpg",
+      ],
+    },
+    {
+      name: "Denim Jeans",
+      price: new Decimal(79.99),
+      description: "Classic fit denim jeans with five pockets",
+      images: [
+        "https://example.com/jeans-1.jpg",
+        "https://example.com/jeans-2.jpg",
+      ],
+    },
+    {
+      name: "Running Shoes",
+      price: new Decimal(119.99),
+      description: "Lightweight running shoes with cushioned sole",
+      images: [
+        "https://example.com/shoes-1.jpg",
+        "https://example.com/shoes-2.jpg",
+      ],
+    },
+  ];
 
-  console.log("Seeded:", products);
+  for (const product of products) {
+    await prisma.product.create({
+      data: product,
+    });
+  }
+
+  console.log("Database seeded!");
 }
 
 main()

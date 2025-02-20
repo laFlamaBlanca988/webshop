@@ -1,19 +1,36 @@
 version: "3.8"
 services:
+  db:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: webshop
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   frontend:
     container_name: frontend
     build:
       context: . #if your Dockerfile is not at the same level change the path here (./frontend)
       target: dev
     restart: always
-    command: yarn dev
+    command: sh -c "yarn prisma generate && yarn prisma migrate deploy && yarn prisma db seed && yarn dev"
     environment:
       - NODE_ENV=development
       #if you’re using Windows, you may need to uncomment the next line - Sol from @Kobe E
       #- WATCHPACK_POLLING=true
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/webshop
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
     ports:
       - 3000:3000
+
+volumes:
+  postgres_data:

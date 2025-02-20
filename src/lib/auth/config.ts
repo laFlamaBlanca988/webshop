@@ -19,8 +19,8 @@ export const authOptions: NextAuthOptions = {
     maxAge: authConfig.sessionMaxAge,
   },
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
+    signIn: "/auth",
+    error: "/auth",
   },
   providers: [
     CredentialsProvider({
@@ -62,23 +62,6 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      // Allow OAuth without email verification
-      if (account?.provider !== "credentials") {
-        return true;
-      }
-
-      const dbUser = await prisma.user.findUnique({
-        where: { email: user.email! },
-      });
-
-      // Prevent sign in without email verification for credentials provider
-      if (!dbUser?.emailVerified) {
-        throw new Error("Please verify your email first");
-      }
-
-      return true;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;

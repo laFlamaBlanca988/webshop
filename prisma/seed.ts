@@ -7,44 +7,30 @@ async function main() {
   // Delete existing records
   await prisma.product.deleteMany({});
 
-  // Create sample products
-  const products = [
-    {
-      name: "Classic T-Shirt",
-      price: new Decimal(29.99),
-      description: "Comfortable cotton t-shirt in various colors",
+  // Generate 1000 dummy products
+  const products = [];
+  for (let i = 0; i < 1000; i++) {
+    products.push({
+      name: `Product ${i + 1}`,
+      price: new Decimal((Math.random() * 100).toFixed(2)),
+      description: `This is a dummy description for product number ${
+        i + 1
+      }. It's a great product!`,
       images: [
-        "https://example.com/tshirt-1.jpg",
-        "https://example.com/tshirt-2.jpg",
+        `https://example.com/product-${i + 1}-1.jpg`,
+        `https://example.com/product-${i + 1}-2.jpg`,
       ],
-    },
-    {
-      name: "Denim Jeans",
-      price: new Decimal(79.99),
-      description: "Classic fit denim jeans with five pockets",
-      images: [
-        "https://example.com/jeans-1.jpg",
-        "https://example.com/jeans-2.jpg",
-      ],
-    },
-    {
-      name: "Running Shoes",
-      price: new Decimal(119.99),
-      description: "Lightweight running shoes with cushioned sole",
-      images: [
-        "https://example.com/shoes-1.jpg",
-        "https://example.com/shoes-2.jpg",
-      ],
-    },
-  ];
-
-  for (const product of products) {
-    await prisma.product.create({
-      data: product,
     });
   }
 
-  console.log("Database seeded!");
+  // Insert products into the database in batches of 500 to avoid performance issues
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < products.length; i += BATCH_SIZE) {
+    const batch = products.slice(i, i + BATCH_SIZE);
+    await prisma.product.createMany({ data: batch });
+  }
+
+  console.log("Database seeded with 1000 products!");
 }
 
 main()

@@ -1,4 +1,4 @@
-import { Prisma, Product as PrismaProduct } from "@prisma/client";
+import { Product as PrismaProduct } from "@prisma/client";
 
 // Convert Prisma Decimal to number for the API
 export type Product = Omit<PrismaProduct, "price"> & {
